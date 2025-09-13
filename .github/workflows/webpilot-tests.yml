@@ -1,0 +1,159 @@
+name: WebPilot Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'URL to test (optional)'
+        required: false
+        default: 'https://atlas.luminousdynamics.io'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        browser: [firefox, chromium]
+        python-version: ['3.10', '3.11']
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            firefox \
+            chromium-browser \
+            tesseract-ocr \
+            libtesseract-dev
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install --with dev --extras all
+      
+      - name: Install Playwright browsers
+        run: |
+          poetry run playwright install ${{ matrix.browser }}
+      
+      - name: Run unit tests
+        run: |
+          poetry run pytest tests/unit/ -v --cov=webpilot
+      
+      - name: Run integration tests
+        env:
+          BROWSER: ${{ matrix.browser }}
+          TARGET_URL: ${{ github.event.inputs.target_url || 'https://atlas.luminousdynamics.io' }}
+        run: |
+          poetry run pytest tests/integration/ -v
+      
+      - name: Run smoke tests
+        run: |
+          poetry run webpilot test --smoke --browser=${{ matrix.browser }}
+      
+      - name: Run performance tests
+        if: matrix.browser == 'chromium'  # Only run on one browser
+        run: |
+          poetry run python examples/test_terra_atlas.py
+      
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports-${{ matrix.browser }}-${{ matrix.python-version }}
+          path: |
+            examples/reports/*.html
+            examples/reports/*.json
+            coverage.xml
+      
+      - name: Upload coverage to Codecov
+        if: matrix.browser == 'chromium' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'examples/reports/';
+            
+            // Find the latest report
+            const files = fs.readdirSync(reportPath);
+            const jsonReports = files.filter(f => f.endsWith('.json'));
+            
+            if (jsonReports.length > 0) {
+              const latestReport = jsonReports.sort().pop();
+              const report = JSON.parse(fs.readFileSync(`${reportPath}${latestReport}`, 'utf8'));
+              
+              const comment = `## 🚁 WebPilot Test Results
+              
+              **Browser**: ${{ matrix.browser }}
+              **Python**: ${{ matrix.python-version }}
+              
+              ### Summary
+              - Total Tests: ${report.summary.total}
+              - ✅ Passed: ${report.summary.passed}
+              - ❌ Failed: ${report.summary.failed}
+              - ⏭️ Skipped: ${report.summary.skipped}
+              - **Pass Rate**: ${report.summary.pass_rate.toFixed(1)}%
+              
+              ### Performance Metrics
+              - Average Load Time: ${report.metadata.avg_load_time_ms || 'N/A'}ms
+              - Average FCP: ${report.metadata.avg_fcp_ms || 'N/A'}ms
+              
+              [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install mkdocs mkdocs-material
+      
+      - name: Build documentation
+        run: |
+          mkdocs build
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site

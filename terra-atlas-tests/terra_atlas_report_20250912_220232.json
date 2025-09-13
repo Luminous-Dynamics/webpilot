@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-09-12T22:01:10.168933",
+  "site": "Terra Atlas",
+  "url": "https://atlas.luminousdynamics.io",
+  "tests": {
+    "homepage": {
+      "success": true,
+      "status_code": 200,
+      "content_size": 11226,
+      "has_3d_globe": false,
+      "has_projects": true,
+      "load_time_ms": 172.30629920959473
+    },
+    "page_availability": {
+      "/": {
+        "success": true,
+        "status": 200,
+        "load_time_ms": 161.5316867828369
+      },
+      "/explore": {
+        "success": true,
+        "status": 200,
+        "load_time_ms": 157.68957138061523
+      },
+      "/projects": {
+        "success": false,
+        "status": 404,
+        "load_time_ms": 155.0891399383545
+      },
+      "/about": {
+        "success": true,
+        "status": 200,
+        "load_time_ms": 161.01598739624023
+      },
+      "/invest": {
+        "success": false,
+        "status": 404,
+        "load_time_ms": 151.5669822692871
+      }
+    },
+    "performance": {
+      "success": true,
+      "metrics": {
+        "url": "https://atlas.luminousdynamics.io",
+        "load_time_ms": 0,
+        "dom_ready_ms": 0,
+        "first_paint_ms": 0,
+        "fcp_ms": 0,
+        "lcp_ms": 0,
+        "tti_ms": 0,
+        "total_size": 0,
+        "requests": 0,
+        "timestamp": "2025-09-12T22:01:19.863370"
+      },
+      "scores": {
+        "load_time": 100,
+        "fcp": 100,
+        "dom_ready": 100
+      },
+      "overall_score": 100.0
+    },
+    "accessibility": {
+      "success": false,
+      "score": 0,
+      "issues": [],
+      "warnings": []
+    },
+    "seo": {
+      "error": "Failed to parse SEO audit results"
+    }
+  },
+  "summary": {
+    "total_tests": 5,
+    "passed": 2,
+    "failed": 3,
+    "success_rate": 40.0
+  }
+}

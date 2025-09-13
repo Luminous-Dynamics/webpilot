@@ -1,0 +1,195 @@
+{
+  "project": "Terra Atlas Energy Investment Platform",
+  "base_url": "https://atlas.luminousdynamics.io",
+  "test_suites": [
+    {
+      "name": "Critical Path Tests",
+      "type": "smoke",
+      "urls": [
+        "https://atlas.luminousdynamics.io",
+        "https://atlas.luminousdynamics.io/explore",
+        "https://atlas.luminousdynamics.io/projects",
+        "https://atlas.luminousdynamics.io/invest"
+      ],
+      "thresholds": {
+        "min_success_rate": 100
+      },
+      "required": true
+    },
+    {
+      "name": "Homepage Performance",
+      "type": "performance",
+      "urls": [
+        "https://atlas.luminousdynamics.io"
+      ],
+      "thresholds": {
+        "max_load_time": 4000,
+        "max_fcp": 2500,
+        "max_lcp": 3500
+      },
+      "required": true
+    },
+    {
+      "name": "3D Globe Performance",
+      "type": "performance",
+      "urls": [
+        "https://atlas.luminousdynamics.io/explore"
+      ],
+      "thresholds": {
+        "max_load_time": 5000,
+        "max_fcp": 3000
+      },
+      "required": false
+    },
+    {
+      "name": "Accessibility Compliance",
+      "type": "accessibility",
+      "urls": [
+        "https://atlas.luminousdynamics.io",
+        "https://atlas.luminousdynamics.io/projects",
+        "https://atlas.luminousdynamics.io/about"
+      ],
+      "thresholds": {
+        "min_score": 85
+      },
+      "required": false
+    },
+    {
+      "name": "Visual Regression",
+      "type": "visual_regression",
+      "urls": [
+        "https://atlas.luminousdynamics.io",
+        "https://atlas.luminousdynamics.io/projects"
+      ],
+      "thresholds": {
+        "similarity": 0.95
+      },
+      "required": false
+    },
+    {
+      "name": "SEO Optimization",
+      "type": "seo",
+      "urls": [
+        "https://atlas.luminousdynamics.io",
+        "https://atlas.luminousdynamics.io/about"
+      ],
+      "thresholds": {
+        "min_score": 80
+      },
+      "required": false
+    },
+    {
+      "name": "Investment Flow Test",
+      "type": "smoke",
+      "urls": [
+        "https://atlas.luminousdynamics.io/invest",
+        "https://atlas.luminousdynamics.io/projects"
+      ],
+      "thresholds": {
+        "min_success_rate": 100
+      },
+      "required": true
+    }
+  ],
+  "performance_budgets": {
+    "homepage": {
+      "max_load_time": 3500,
+      "max_fcp": 2000,
+      "max_lcp": 3000,
+      "max_tti": 4000,
+      "max_size_mb": 3
+    },
+    "3d_globe": {
+      "max_load_time": 5000,
+      "max_fcp": 3000,
+      "max_memory_mb": 150,
+      "max_gpu_time_ms": 16
+    },
+    "api_response": {
+      "max_latency_ms": 200,
+      "max_p95_ms": 500,
+      "max_p99_ms": 1000
+    }
+  },
+  "monitoring": {
+    "check_interval_minutes": 30,
+    "alert_thresholds": {
+      "uptime_percent": 99.5,
+      "error_rate_percent": 1,
+      "slow_requests_percent": 5
+    },
+    "key_user_flows": [
+      {
+        "name": "View Energy Project",
+        "steps": [
+          "Navigate to homepage",
+          "Click on 3D globe",
+          "Select a project marker",
+          "View project details",
+          "Check investment options"
+        ]
+      },
+      {
+        "name": "Investment Flow",
+        "steps": [
+          "Navigate to projects",
+          "Filter by region/type",
+          "Select project",
+          "Click invest button",
+          "Complete investment form"
+        ]
+      }
+    ]
+  },
+  "notifications": {
+    "email": "tristan.stoltz@gmail.com",
+    "slack_webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+  },
+  "deployment": {
+    "production_url": "https://atlas.luminousdynamics.io",
+    "staging_url": "https://staging-atlas.luminousdynamics.io",
+    "vercel_project": "terra-atlas",
+    "github_repo": "Luminous-Dynamics/terra-atlas",
+    "branch_protection": {
+      "main": {
+        "required_checks": [
+          "smoke_tests",
+          "performance_tests",
+          "visual_regression"
+        ],
+        "min_reviews": 1
+      }
+    }
+  },
+  "custom_metrics": {
+    "business_kpis": [
+      {
+        "name": "Projects Displayed",
+        "selector": ".project-card",
+        "min_count": 50
+      },
+      {
+        "name": "3D Globe Loaded",
+        "selector": "canvas#globe",
+        "required": true
+      },
+      {
+        "name": "Investment CTA Visible",
+        "selector": ".invest-button",
+        "required": true
+      }
+    ],
+    "terra_specific": [
+      {
+        "metric": "Energy Projects Count",
+        "endpoint": "/api/projects/count",
+        "min_value": 100
+      },
+      {
+        "metric": "Total Investment Potential",
+        "endpoint": "/api/stats/potential",
+        "min_value": 1000000000
+      }
+    ]
+  }
+}
