@@ -1,22 +1,53 @@
-# 🚁 WebPilot
+# 🚁 WebPilot - Universal Web Automation for ANY LLM
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![PyPI version](https://badge.fury.io/py/claude-webpilot.svg)](https://pypi.org/project/claude-webpilot/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation Status](https://readthedocs.org/projects/webpilot/badge/?version=latest)](https://webpilot.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/yourusername/webpilot/badge.svg?branch=main)](https://coveralls.io/github/yourusername/webpilot?branch=main)
+[![LLM Support](https://img.shields.io/badge/LLM%20Support-Universal-brightgreen)](https://github.com/Luminous-Dynamics/webpilot)
+[![Tests](https://img.shields.io/badge/tests-500%2B-success)](https://github.com/Luminous-Dynamics/webpilot)
 
-> **Professional Web Automation Framework with 60+ MCP Tools, Cloud Support, and AI Integration**
+> **🚀 v1.4.0 - Universal LLM Support + Visual Intelligence + Autonomous Agents + Natural Language Tests!**
 
-WebPilot v1.3.0 is a comprehensive web automation framework that combines browser automation, intelligent test generation, and seamless CI/CD integration. Now with **60+ MCP tools**, intelligent error handling, cloud platform support, and performance optimization.
+WebPilot is the most comprehensive web automation framework that works with **ANY Large Language Model**. Control browsers with natural language, create self-healing automations, and generate tests from plain English descriptions.
 
-## 🎉 What's New in v1.3.0
+## 🎉 What's New in v1.4.0
 
-- **🛠️ 60+ MCP Tools**: Expanded from 27 to 60+ tools for comprehensive automation
-- **🛡️ Intelligent Error Handling**: Context-aware error recovery with actionable suggestions
-- **☁️ Cloud Platform Support**: Native integration with BrowserStack, Sauce Labs, and LambdaTest
-- **⚡ Performance Optimization**: Smart caching, parallel execution, and batch operations
-- **📊 Enhanced Reporting**: Performance metrics and cache statistics
+### 🤖 Universal LLM Support
+- **OpenAI/GPT-4**: Native function calling with 60+ tools
+- **Claude**: Full MCP (Model Context Protocol) integration  
+- **Local LLMs**: Ollama, LM Studio, and self-hosted models
+- **LangChain**: Support for 100+ LLM providers
+- **REST API**: Language-agnostic HTTP/WebSocket interface
+- **Any LLM**: Works with any model that can generate text
+
+### 🖥️ Universal CLI
+```bash
+# Natural language automation from your terminal
+webpilot execute "Go to GitHub and star the WebPilot repo"
+webpilot execute "Take a screenshot of the pricing page" --llm ollama
+webpilot serve  # Start REST API server for any language
+```
+
+### 👁️ Visual Intelligence
+- **See Like Humans**: Click and type using visual descriptions
+- **No Selectors Needed**: "Click the blue submit button"
+- **OCR Integration**: Extract text from any part of the page
+- **Layout Understanding**: Analyze page structure visually
+- **Vision LLM Ready**: Works with GPT-4V, Claude, and others
+
+### 🔄 Autonomous Agents
+- **Self-Healing**: Automatically recover from failures
+- **Smart Recovery**: Visual fallback, retry strategies, alternative paths
+- **Learning System**: Agents improve over time
+- **Task Planning**: Break complex tasks into steps
+- **Progress Tracking**: Real-time status updates
+
+### 📝 Natural Language Test Generation
+- **Plain English**: Write tests in natural language
+- **Multi-Framework**: Generate pytest, Jest, Cypress, Playwright tests
+- **Multi-Language**: Python, JavaScript, TypeScript output
+- **BDD Support**: Gherkin-style test descriptions
+- **Test Recording**: Record actions and generate tests
 
 ## ✨ Key Features
 
@@ -94,6 +125,72 @@ with CloudWebPilot(config, browser="chrome", os_name="Windows", os_version="11")
     pilot.start("https://myapp.com")
     # Your test steps here
     pilot.mark_test_status(passed=True)
+```
+
+## 🌍 Universal LLM Integration - Use with ANY Language Model!
+
+### Quick Start with Your Favorite LLM
+
+#### OpenAI / ChatGPT
+```python
+from webpilot.adapters import OpenAIAdapter
+from openai import OpenAI
+
+client = OpenAI()
+webpilot = OpenAIAdapter()
+
+# Get functions for OpenAI
+functions = webpilot.get_functions()
+
+# Use with ChatGPT
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Go to example.com and take a screenshot"}],
+    functions=functions,
+    function_call="auto"
+)
+
+# Execute the function
+if response.choices[0].message.function_call:
+    result = await webpilot.execute_function(
+        response.choices[0].message.function_call.name,
+        json.loads(response.choices[0].message.function_call.arguments)
+    )
+```
+
+#### Local LLMs (Ollama / LM Studio)
+```python
+# Start REST API server
+# python -m webpilot.server.rest_api
+
+import requests
+
+# Works with ANY local LLM
+response = requests.post("http://localhost:8000/execute/natural", json={
+    "query": "Navigate to GitHub and search for Python projects"
+})
+```
+
+#### LangChain (100+ LLMs)
+```python
+from langchain_community.llms import Ollama
+from webpilot.integrations import create_webpilot_agent
+
+llm = Ollama(model="llama2")
+agent = create_webpilot_agent(llm)
+
+result = agent.run("Go to news site and find top story")
+```
+
+### REST API for Universal Access
+```bash
+# Start API server
+python -m webpilot.server.rest_api
+
+# Use from ANY language or LLM
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool_name": "navigate", "arguments": {"url": "https://example.com"}}'
 ```
 
 ## 🤖 MCP Integration - 60+ Tools for AI Assistants!

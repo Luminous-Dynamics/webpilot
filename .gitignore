@@ -137,4 +137,16 @@ $RECYCLE.BIN/
 !.circleci/
 !azure-pipelines.yml
 !bitbucket-pipelines.yml
-!.travis.yml.pypi-credentials-secure
+!.travis.yml
+
+# Sensitive files - NEVER commit
+.pypi-credentials-secure
+.pypi-credentials*
+bitwarden_*.json
+*_CREDENTIALS_*.md
+PYPI_CREDENTIALS_SECURE.md
+*.token
+*.key
+*.secret
+*_TOKEN_*
+*_SECRET_*
