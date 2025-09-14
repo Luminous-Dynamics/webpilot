@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "webpilot": {
+      "command": "python",
+      "args": ["-m", "webpilot.mcp.server"],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "description": "WebPilot MCP server for web automation"
+    }
+  }
+}

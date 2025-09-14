@@ -1,8 +1,9 @@
 """
 WebPilot - Comprehensive Web Automation and DevOps Testing Framework
+Now with Model Context Protocol (MCP) support for AI assistant integration.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Core imports
 from .core import (
@@ -29,6 +30,16 @@ from .features.devops import (
 # Integrations
 from .integrations.cicd import WebPilotCICD
 
+# MCP Support
+try:
+    from .mcp import WebPilotMCPServer, WebPilotTools, WebPilotResources
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+    WebPilotMCPServer = None
+    WebPilotTools = None
+    WebPilotResources = None
+
 # Convenience imports
 __all__ = [
     # Core
@@ -51,4 +62,10 @@ __all__ = [
     
     # Integrations
     'WebPilotCICD',
+    
+    # MCP components
+    'WebPilotMCPServer',
+    'WebPilotTools',
+    'WebPilotResources',
+    'MCP_AVAILABLE',
 ]

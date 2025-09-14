@@ -137,4 +137,4 @@ $RECYCLE.BIN/
 !.circleci/
 !azure-pipelines.yml
 !bitbucket-pipelines.yml
-!.travis.yml
+!.travis.yml.pypi-credentials-secure

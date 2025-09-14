@@ -13,7 +13,8 @@ WebPilot is a comprehensive web automation framework that combines browser autom
 ## ✨ Key Features
 
 - 🌐 **Multi-Backend Support**: Selenium, Playwright, and async HTTP operations
-- 🤖 **ML-Powered Test Generation**: Automatically learn and generate tests from user interactions
+- 🤖 **MCP Integration**: Full Model Context Protocol support for AI assistant integration
+- 🧠 **ML-Powered Test Generation**: Automatically learn and generate tests from user interactions
 - ☁️ **Cloud Testing**: Native support for BrowserStack, Sauce Labs, LambdaTest
 - 🚀 **CI/CD Ready**: Pre-built templates for GitHub Actions, GitLab, Jenkins, and more
 - 📊 **Advanced Reporting**: Beautiful HTML reports with charts and visualizations
@@ -86,6 +87,33 @@ with CloudWebPilot(config, browser="chrome", os_name="Windows", os_version="11")
     # Your test steps here
     pilot.mark_test_status(passed=True)
 ```
+
+### AI Assistant Integration (MCP)
+
+WebPilot includes full Model Context Protocol (MCP) support for seamless AI assistant integration:
+
+```python
+# MCP is automatically available for AI assistants
+from webpilot import MCP_AVAILABLE
+
+if MCP_AVAILABLE:
+    print("MCP support is enabled!")
+    # AI assistants can now control WebPilot through MCP protocol
+```
+
+For Claude Desktop users, add to your MCP configuration:
+```json
+{
+  "mcpServers": {
+    "webpilot": {
+      "command": "python",
+      "args": ["-m", "webpilot.mcp.run_server"]
+    }
+  }
+}
+```
+
+See [MCP Integration Guide](docs/mcp_integration.md) for full details.
 
 ## 📚 Documentation
 
