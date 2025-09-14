@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "webpilot": {
+      "command": "python",
+      "args": [
+        "-m",
+        "webpilot.mcp.run_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/srv/luminous-dynamics/_development/web-automation/claude-webpilot/src"
+      }
+    }
+  }
+}

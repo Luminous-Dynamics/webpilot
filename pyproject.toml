@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "claude-webpilot"
-version = "1.2.0"
-description = "Professional Web Automation and Testing Framework with ML-Powered Test Generation"
+version = "1.4.0"
+description = "Universal Web Automation Framework with LLM Support, Visual Intelligence, Autonomous Agents, and Natural Language Test Generation"
 authors = ["WebPilot Contributors"]
 maintainers = ["WebPilot Team <webpilot@example.com>"]
 license = "MIT"
@@ -58,10 +58,18 @@ numpy = { version = ">=1.26.0", optional = true }
 playwright = "^1.55.0"
 scikit-learn = "^1.7.2"
 pyyaml = "^6.0.2"
+rich = "^13.0.0"
+fastapi = "^0.100.0"
+uvicorn = "^0.30.0"
+websockets = "^12.0"
+openai = { version = "^1.0.0", optional = true }
+langchain = { version = "^0.1.0", optional = true }
+langchain-community = { version = "^0.1.0", optional = true }
 
 [tool.poetry.extras]
 vision = ["opencv-python", "pytesseract", "numpy"]
-all = ["opencv-python", "pytesseract", "numpy"]
+llm = ["openai", "langchain", "langchain-community"]
+all = ["opencv-python", "pytesseract", "numpy", "openai", "langchain", "langchain-community"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -73,7 +81,7 @@ mypy = "^1.13.0"
 isort = "^6.0.1"
 
 [tool.poetry.scripts]
-webpilot = "webpilot.cli:main"
+webpilot = "webpilot.cli.universal_cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

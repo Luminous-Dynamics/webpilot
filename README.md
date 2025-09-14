@@ -1,28 +1,67 @@
-# 🚁 WebPilot
+# 🚁 WebPilot - Universal Web Automation for ANY LLM
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![PyPI version](https://badge.fury.io/py/claude-webpilot.svg)](https://pypi.org/project/claude-webpilot/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation Status](https://readthedocs.org/projects/webpilot/badge/?version=latest)](https://webpilot.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/yourusername/webpilot/badge.svg?branch=main)](https://coveralls.io/github/yourusername/webpilot?branch=main)
+[![LLM Support](https://img.shields.io/badge/LLM%20Support-Universal-brightgreen)](https://github.com/Luminous-Dynamics/webpilot)
+[![Tests](https://img.shields.io/badge/tests-500%2B-success)](https://github.com/Luminous-Dynamics/webpilot)
 
-> **Professional Web Automation and Testing Framework with ML-Powered Test Generation**
+> **🚀 v1.4.0 - Universal LLM Support + Visual Intelligence + Autonomous Agents + Natural Language Tests!**
 
-WebPilot is a comprehensive web automation framework that combines browser automation, intelligent test generation, and seamless CI/CD integration. Built for developers who need reliable, maintainable, and intelligent testing solutions.
+WebPilot is the most comprehensive web automation framework that works with **ANY Large Language Model**. Control browsers with natural language, create self-healing automations, and generate tests from plain English descriptions.
+
+## 🎉 What's New in v1.4.0
+
+### 🤖 Universal LLM Support
+- **OpenAI/GPT-4**: Native function calling with 60+ tools
+- **Claude**: Full MCP (Model Context Protocol) integration  
+- **Local LLMs**: Ollama, LM Studio, and self-hosted models
+- **LangChain**: Support for 100+ LLM providers
+- **REST API**: Language-agnostic HTTP/WebSocket interface
+- **Any LLM**: Works with any model that can generate text
+
+### 🖥️ Universal CLI
+```bash
+# Natural language automation from your terminal
+webpilot execute "Go to GitHub and star the WebPilot repo"
+webpilot execute "Take a screenshot of the pricing page" --llm ollama
+webpilot serve  # Start REST API server for any language
+```
+
+### 👁️ Visual Intelligence
+- **See Like Humans**: Click and type using visual descriptions
+- **No Selectors Needed**: "Click the blue submit button"
+- **OCR Integration**: Extract text from any part of the page
+- **Layout Understanding**: Analyze page structure visually
+- **Vision LLM Ready**: Works with GPT-4V, Claude, and others
+
+### 🔄 Autonomous Agents
+- **Self-Healing**: Automatically recover from failures
+- **Smart Recovery**: Visual fallback, retry strategies, alternative paths
+- **Learning System**: Agents improve over time
+- **Task Planning**: Break complex tasks into steps
+- **Progress Tracking**: Real-time status updates
+
+### 📝 Natural Language Test Generation
+- **Plain English**: Write tests in natural language
+- **Multi-Framework**: Generate pytest, Jest, Cypress, Playwright tests
+- **Multi-Language**: Python, JavaScript, TypeScript output
+- **BDD Support**: Gherkin-style test descriptions
+- **Test Recording**: Record actions and generate tests
 
 ## ✨ Key Features
 
 - 🌐 **Multi-Backend Support**: Selenium, Playwright, and async HTTP operations
-- 🤖 **MCP Integration**: Full Model Context Protocol support for AI assistant integration
+- 🤖 **MCP Integration**: Full Model Context Protocol with **60+ tools** for AI assistants
 - 🧠 **ML-Powered Test Generation**: Automatically learn and generate tests from user interactions
 - ☁️ **Cloud Testing**: Native support for BrowserStack, Sauce Labs, LambdaTest
 - 🚀 **CI/CD Ready**: Pre-built templates for GitHub Actions, GitLab, Jenkins, and more
-- 📊 **Advanced Reporting**: Beautiful HTML reports with charts and visualizations
+- 📊 **Advanced Reporting**: Beautiful HTML reports with performance metrics
 - 🔍 **Smart Waiting**: Intelligent wait strategies that adapt to your application
 - ♿ **Accessibility Testing**: Built-in WCAG compliance checking
 - 🎯 **Visual Testing**: Screenshot comparison and OCR capabilities
-- ⚡ **Performance Testing**: Lighthouse integration and custom metrics
-- 🔒 **Security Scanning**: Basic security audit capabilities
+- ⚡ **Performance Testing**: Lighthouse integration and smart caching
+- 🔒 **Security Scanning**: Security audit capabilities with recovery suggestions
 
 ## 🚀 Quick Start
 
@@ -88,20 +127,118 @@ with CloudWebPilot(config, browser="chrome", os_name="Windows", os_version="11")
     pilot.mark_test_status(passed=True)
 ```
 
-### AI Assistant Integration (MCP)
+## 🌍 Universal LLM Integration - Use with ANY Language Model!
 
-WebPilot includes full Model Context Protocol (MCP) support for seamless AI assistant integration:
+### Quick Start with Your Favorite LLM
 
+#### OpenAI / ChatGPT
 ```python
-# MCP is automatically available for AI assistants
-from webpilot import MCP_AVAILABLE
+from webpilot.adapters import OpenAIAdapter
+from openai import OpenAI
 
-if MCP_AVAILABLE:
-    print("MCP support is enabled!")
-    # AI assistants can now control WebPilot through MCP protocol
+client = OpenAI()
+webpilot = OpenAIAdapter()
+
+# Get functions for OpenAI
+functions = webpilot.get_functions()
+
+# Use with ChatGPT
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Go to example.com and take a screenshot"}],
+    functions=functions,
+    function_call="auto"
+)
+
+# Execute the function
+if response.choices[0].message.function_call:
+    result = await webpilot.execute_function(
+        response.choices[0].message.function_call.name,
+        json.loads(response.choices[0].message.function_call.arguments)
+    )
 ```
 
-For Claude Desktop users, add to your MCP configuration:
+#### Local LLMs (Ollama / LM Studio)
+```python
+# Start REST API server
+# python -m webpilot.server.rest_api
+
+import requests
+
+# Works with ANY local LLM
+response = requests.post("http://localhost:8000/execute/natural", json={
+    "query": "Navigate to GitHub and search for Python projects"
+})
+```
+
+#### LangChain (100+ LLMs)
+```python
+from langchain_community.llms import Ollama
+from webpilot.integrations import create_webpilot_agent
+
+llm = Ollama(model="llama2")
+agent = create_webpilot_agent(llm)
+
+result = agent.run("Go to news site and find top story")
+```
+
+### REST API for Universal Access
+```bash
+# Start API server
+python -m webpilot.server.rest_api
+
+# Use from ANY language or LLM
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool_name": "navigate", "arguments": {"url": "https://example.com"}}'
+```
+
+## 🤖 MCP Integration - 60+ Tools for AI Assistants!
+
+WebPilot v1.3.0 provides comprehensive Model Context Protocol support with **60+ tools** organized into 8 categories:
+
+### Tool Categories & Counts
+
+| Category | Tools | Examples |
+|----------|-------|----------|
+| **Core** | 9 | `webpilot_start`, `webpilot_navigate`, `webpilot_click`, `webpilot_type` |
+| **Forms** | 5 | `webpilot_fill_form_auto`, `webpilot_upload_file`, `webpilot_validate_form` |
+| **Navigation** | 5 | `webpilot_open_new_tab`, `webpilot_switch_tab`, `webpilot_handle_alert` |
+| **Data** | 8 | `webpilot_extract_emails`, `webpilot_save_as_pdf`, `webpilot_extract_meta_tags` |
+| **Testing** | 8 | `webpilot_check_broken_links`, `webpilot_lighthouse_audit`, `webpilot_check_seo` |
+| **Interaction** | 6 | `webpilot_drag_and_drop`, `webpilot_right_click`, `webpilot_press_key` |
+| **Automation** | 5 | `webpilot_login`, `webpilot_search_and_filter`, `webpilot_monitor_changes` |
+| **Cloud** | 3 | `webpilot_browserstack_session`, `webpilot_sauce_labs_session` |
+
+### New v1.3.0 Enhancements
+
+```python
+from webpilot.mcp.server import WebPilotMCPServer
+
+server = WebPilotMCPServer()
+
+# 🛡️ Intelligent Error Handling
+result = await server.handle_tool_call("webpilot_click", {"selector": ".missing"})
+# Returns helpful recovery suggestions if element not found
+
+# ⚡ Performance Optimization
+server.optimize_for_scenario("speed")  # Enable caching & parallel execution
+perf_report = server.get_performance_report()  # View cache hit rates
+
+# ☁️ Cloud Platform Support
+platforms = server.get_cloud_platforms()  # List available cloud providers
+
+# 🚄 Batch Operations
+results = await server.batch_execute_tools([
+    {"tool": "webpilot_navigate", "params": {"url": "https://example.com"}},
+    {"tool": "webpilot_screenshot", "params": {"name": "page1"}},
+    {"tool": "webpilot_extract", "params": {}}
+])
+```
+
+### For Claude Desktop
+
+Add to your MCP configuration:
 ```json
 {
   "mcpServers": {
