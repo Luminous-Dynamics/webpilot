@@ -7,6 +7,7 @@ functionality to AI assistants like Claude.
 
 import asyncio
 import json
+import time
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 import logging
@@ -14,6 +15,11 @@ import logging
 from ..core import WebPilot, ActionResult
 from ..utils.logging_config import get_logger
 from .resources import WebPilotResources, SessionResource
+from .tools import WebPilotTools
+from .tools_extended import WebPilotExtendedTools
+from .error_handler import error_handler
+from .cloud_manager import cloud_manager, CloudPlatform, CloudCapabilities
+from .performance import performance_optimizer
 
 logger = get_logger(__name__)
 
@@ -247,20 +253,30 @@ class WebPilotMCPServer:
     
     async def handle_tool_call(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Handle an MCP tool call.
+        Handle an MCP tool call with intelligent error handling.
         
         Args:
             tool_name: Name of the tool to execute
             arguments: Tool arguments
             
         Returns:
-            Tool execution result
+            Tool execution result with error recovery suggestions
         """
+        context = {
+            "tool": tool_name,
+            "arguments": arguments,
+            "session_active": self.pilot is not None
+        }
+        
         try:
             if tool_name == "webpilot_start":
                 # Create new WebPilot instance
                 from webpilot.core import BrowserType
                 browser_type = BrowserType[arguments.get('browser', 'firefox').upper()]
+                context["browser"] = browser_type.value
+                context["url"] = arguments.get('url')
+                context["headless"] = arguments.get('headless', False)
+                
                 self.pilot = WebPilot(
                     browser=browser_type,
                     headless=arguments.get('headless', False)
@@ -285,14 +301,25 @@ class WebPilotMCPServer:
             
             # All other tools require an active session
             if not self.pilot:
-                return {
-                    "success": False,
-                    "error": "No active session. Use webpilot_start first."
-                }
+                return error_handler.handle_error(
+                    ValueError("No active session. Use webpilot_start first."),
+                    context
+                )
             
+            # Add current URL to context
+            if hasattr(self.pilot, 'current_url'):
+                context["url"] = self.pilot.current_url
+            
+            # Handle extended tools
+            if tool_name.startswith("webpilot_") and not hasattr(self, f"_handle_{tool_name}"):
+                return await self._handle_extended_tool(tool_name, arguments, context)
+            
+            # Handle basic tools
             if tool_name == "webpilot_navigate":
+                context["url"] = arguments.get('url')
                 result = self.pilot.navigate(arguments['url'])
             elif tool_name == "webpilot_click":
+                context["selector"] = arguments.get('selector') or arguments.get('text')
                 result = self.pilot.click(
                     x=arguments.get('x'),
                     y=arguments.get('y'),
@@ -319,10 +346,10 @@ class WebPilotMCPServer:
                 result = self.pilot.close()
                 self.pilot = None
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown tool: {tool_name}"
-                }
+                return error_handler.handle_error(
+                    ValueError(f"Unknown tool: {tool_name}"),
+                    context
+                )
             
             return {
                 "success": result.success,
@@ -332,11 +359,140 @@ class WebPilotMCPServer:
             }
             
         except Exception as e:
-            self.logger.error(f"Tool execution failed: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            # Use intelligent error handler
+            return error_handler.handle_error(e, context)
+    
+    async def _handle_extended_tool(self, tool_name: str, arguments: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle extended tools dynamically.
+        
+        Args:
+            tool_name: Name of the extended tool
+            arguments: Tool arguments
+            context: Error context
+            
+        Returns:
+            Tool execution result
+        """
+        # Strip the webpilot_ prefix
+        tool_base_name = tool_name.replace("webpilot_", "")
+        
+        # Map extended tool names to pilot methods
+        extended_mappings = {
+            # Form tools
+            "fill_form_auto": lambda args: self.pilot.fill_form_auto(
+                args.get('form_selector'), args.get('use_faker', True)
+            ),
+            "upload_file": lambda args: self.pilot.upload_file(
+                args['selector'], args['file_path']
+            ),
+            "validate_form": lambda args: self.pilot.validate_form(
+                args.get('form_selector')
+            ),
+            "clear_form": lambda args: self.pilot.clear_form(
+                args.get('form_selector')
+            ),
+            
+            # Navigation tools
+            "open_new_tab": lambda args: self.pilot.open_new_tab(args['url']),
+            "switch_tab": lambda args: self.pilot.switch_tab(
+                index=args.get('index'), title=args.get('title')
+            ),
+            "close_tab": lambda args: self.pilot.close_tab(args.get('index')),
+            "handle_alert": lambda args: self.pilot.handle_alert(args.get('action', 'read')),
+            
+            # Data extraction tools
+            "extract_structured_data": lambda args: self.pilot.extract_structured_data(
+                args['schema']
+            ),
+            "extract_json_ld": lambda args: self.pilot.extract_json_ld(),
+            "extract_meta_tags": lambda args: self.pilot.extract_meta_tags(),
+            "extract_emails": lambda args: self.pilot.extract_emails(
+                unique=args.get('unique', True)
+            ),
+            "save_as_pdf": lambda args: self.pilot.save_as_pdf(
+                args.get('filename', 'page.pdf')
+            ),
+            
+            # Testing tools
+            "check_broken_links": lambda args: self.pilot.check_broken_links(
+                check_external=args.get('check_external', False)
+            ),
+            "check_console_errors": lambda args: self.pilot.check_console_errors(),
+            "measure_load_time": lambda args: self.pilot.measure_load_time(),
+            
+            # Interaction tools
+            "drag_and_drop": lambda args: self.pilot.drag_and_drop(
+                args['source'], args['target']
+            ),
+            "right_click": lambda args: self.pilot.right_click(args['selector']),
+            "double_click": lambda args: self.pilot.double_click(args['selector']),
+            "press_key": lambda args: self.pilot.press_key(
+                args['key'], modifiers=args.get('modifiers', [])
+            ),
+            
+            # Automation tools
+            "login": lambda args: self.pilot.login(
+                args['username'], args['password'], 
+                auto_detect=args.get('auto_detect', True)
+            ),
+            "search_and_filter": lambda args: self.pilot.search_and_filter(
+                args['query'], filters=args.get('filters')
+            ),
+            "monitor_changes": lambda args: self.pilot.monitor_changes(
+                selector=args.get('selector'),
+                interval=args.get('interval', 5),
+                timeout=args.get('timeout', 60)
+            ),
+            
+            # Cloud platform tools
+            "browserstack_session": lambda args: self._handle_cloud_session(
+                CloudPlatform.BROWSERSTACK, args
+            ),
+            "sauce_labs_session": lambda args: self._handle_cloud_session(
+                CloudPlatform.SAUCE_LABS, args
+            ),
+            "lambda_test_session": lambda args: self._handle_cloud_session(
+                CloudPlatform.LAMBDA_TEST, args
+            )
+        }
+        
+        # Check if we have a handler for this tool
+        if tool_base_name in extended_mappings:
+            try:
+                # Call the appropriate method
+                handler = extended_mappings[tool_base_name]
+                result = handler(arguments)
+                
+                # Convert result to standard format if needed
+                if hasattr(result, 'success'):
+                    return {
+                        "success": result.success,
+                        "data": result.data,
+                        "error": result.error,
+                        "duration_ms": getattr(result, 'duration_ms', None)
+                    }
+                else:
+                    # Assume success if we got a result
+                    return {
+                        "success": True,
+                        "data": result,
+                        "error": None
+                    }
+                    
+            except AttributeError as e:
+                # Method doesn't exist on pilot - provide helpful error
+                return error_handler.handle_error(
+                    NotImplementedError(f"Extended tool '{tool_base_name}' not yet implemented in core WebPilot"),
+                    context
+                )
+            except Exception as e:
+                return error_handler.handle_error(e, context)
+        else:
+            return error_handler.handle_error(
+                ValueError(f"Unknown extended tool: {tool_name}"),
+                context
+            )
     
     async def handle_resource_read(self, uri: str) -> Dict[str, Any]:
         """
@@ -368,22 +524,224 @@ class WebPilotMCPServer:
                 "error": str(e)
             }
     
-    def get_server_info(self) -> Dict[str, Any]:
+    def get_extended_tools(self) -> List[MCPTool]:
         """
-        Get MCP server information.
+        Get extended MCP tools from tools_extended module.
         
         Returns:
-            Server metadata
+            List of extended tools
         """
+        extended_tools = []
+        
+        # Get all extended tools
+        for tool_dict in WebPilotExtendedTools.get_all_extended_tools():
+            # Convert to MCPTool format
+            input_schema = {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+            
+            # Process parameters
+            for param in tool_dict.get("parameters", []):
+                prop = {
+                    "type": param.type,
+                    "description": param.description
+                }
+                if param.default is not None:
+                    prop["default"] = param.default
+                if param.enum:
+                    prop["enum"] = param.enum
+                    
+                input_schema["properties"][param.name] = prop
+                if param.required:
+                    input_schema["required"].append(param.name)
+            
+            extended_tools.append(MCPTool(
+                name=f"webpilot_{tool_dict['name']}",
+                description=tool_dict['description'],
+                input_schema=input_schema
+            ))
+        
+        return extended_tools
+    
+    def get_all_tools(self) -> List[MCPTool]:
+        """
+        Get all available tools (basic + extended).
+        
+        Returns:
+            Complete list of MCP tools
+        """
+        all_tools = self.get_tools()  # Basic tools
+        all_tools.extend(self.get_extended_tools())  # Extended tools
+        return all_tools
+    
+    def _handle_cloud_session(self, platform: CloudPlatform, args: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle cloud platform session creation.
+        
+        Args:
+            platform: Cloud platform to use
+            args: Session arguments
+            
+        Returns:
+            Session creation result
+        """
+        capabilities = CloudCapabilities(
+            browser=args.get('browser', 'chrome'),
+            browser_version=args.get('browser_version'),
+            os=args.get('os'),
+            os_version=args.get('os_version'),
+            resolution=args.get('resolution'),
+            device=args.get('device'),
+            real_mobile=args.get('real_mobile', False),
+            local_testing=args.get('local_testing', False),
+            video=args.get('video', True),
+            console_logs=args.get('console_logs', True),
+            network_logs=args.get('network_logs', False),
+            visual_testing=args.get('visual_testing', False)
+        )
+        
+        session_name = args.get('build_name') or args.get('test_name')
+        
+        return cloud_manager.create_session(
+            platform=platform,
+            capabilities=capabilities,
+            session_name=session_name
+        )
+    
+    async def handle_tool_call_with_performance(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle tool call with performance tracking.
+        
+        Args:
+            tool_name: Name of the tool to execute
+            arguments: Tool arguments
+            
+        Returns:
+            Tool execution result with performance metrics
+        """
+        # Check cache first
+        cached_result = performance_optimizer.cache.get(tool_name, arguments)
+        if cached_result is not None:
+            cached_result["cache_hit"] = True
+            return cached_result
+        
+        # Execute with performance tracking
+        start_time = time.time()
+        result = await self.handle_tool_call(tool_name, arguments)
+        duration_ms = (time.time() - start_time) * 1000
+        
+        # Add performance metrics
+        result["performance"] = {
+            "duration_ms": duration_ms,
+            "cache_hit": False
+        }
+        
+        # Cache successful results
+        if result.get("success"):
+            performance_optimizer.cache.set(tool_name, arguments, result)
+        
+        # Track metrics
+        from .performance import PerformanceMetrics
+        metric = PerformanceMetrics(
+            operation=tool_name,
+            start_time=start_time,
+            end_time=time.time(),
+            duration_ms=duration_ms,
+            success=result.get("success", False),
+            cache_hit=False,
+            error=result.get("error")
+        )
+        performance_optimizer.metrics.append(metric)
+        
+        return result
+    
+    async def batch_execute_tools(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Execute multiple tools in batch with optimization.
+        
+        Args:
+            tools: List of tool calls to execute
+            
+        Returns:
+            List of results
+        """
+        return await performance_optimizer.batch_execute(tools)
+    
+    def get_performance_report(self) -> Dict[str, Any]:
+        """Get comprehensive performance report."""
+        return performance_optimizer.get_performance_stats()
+    
+    def optimize_for_scenario(self, scenario: str) -> Dict[str, Any]:
+        """
+        Optimize MCP server for specific scenario.
+        
+        Args:
+            scenario: One of 'speed', 'accuracy', 'balanced', 'batch'
+            
+        Returns:
+            Optimization result
+        """
+        performance_optimizer.optimize_for_scenario(scenario)
+        return {
+            "success": True,
+            "scenario": scenario,
+            "settings": {
+                "cache_enabled": performance_optimizer.enable_cache,
+                "parallel_enabled": performance_optimizer.enable_parallel,
+                "metrics_enabled": performance_optimizer.enable_metrics
+            }
+        }
+    
+    def get_cloud_platforms(self) -> List[Dict[str, Any]]:
+        """Get available cloud platforms with credentials."""
+        platforms = []
+        for platform in cloud_manager.get_available_platforms():
+            info = cloud_manager.get_platform_info(platform)
+            info["available"] = True
+            info["platform_id"] = platform.value
+            platforms.append(info)
+        return platforms
+    
+    def get_server_info(self) -> Dict[str, Any]:
+        """
+        Get MCP server information with enhanced capabilities.
+        
+        Returns:
+            Server metadata with performance and cloud support info
+        """
+        tool_count = len(self.get_all_tools())
+        cloud_platforms = self.get_cloud_platforms()
+        perf_stats = performance_optimizer.get_performance_stats()
+        
         return {
             "name": "webpilot-mcp",
-            "version": "1.1.0",
-            "description": "WebPilot MCP server for web automation",
+            "version": "1.3.0",  # Updated version for extended tools + cloud + performance
+            "description": f"WebPilot MCP server with {tool_count}+ web automation tools",
             "capabilities": {
                 "tools": True,
                 "resources": True,
                 "prompts": False,
-                "sampling": False
+                "sampling": False,
+                "cloud_testing": len(cloud_platforms) > 1,  # More than just local
+                "performance_optimization": True,
+                "error_recovery": True,
+                "batch_execution": True
+            },
+            "tool_count": tool_count,
+            "cloud_platforms": cloud_platforms,
+            "performance": {
+                "cache_enabled": performance_optimizer.enable_cache,
+                "parallel_execution": performance_optimizer.enable_parallel,
+                "cache_stats": perf_stats.get("cache_stats", {})
+            },
+            "enhancements": {
+                "intelligent_error_handling": True,
+                "performance_caching": True,
+                "cloud_platform_support": True,
+                "batch_operations": True,
+                "60+_tools": True
             }
         }
 

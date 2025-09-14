@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "claude-webpilot"
-version = "1.2.0"
-description = "Professional Web Automation and Testing Framework with ML-Powered Test Generation"
+version = "1.3.0"
+description = "Professional Web Automation and Testing Framework with 60+ MCP Tools, Cloud Platform Support, and Performance Optimization"
 authors = ["WebPilot Contributors"]
 maintainers = ["WebPilot Team <webpilot@example.com>"]
 license = "MIT"
