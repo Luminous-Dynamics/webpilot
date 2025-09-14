@@ -26,7 +26,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',
     'sphinx_rtd_theme',
-    'sphinx_autodoc_typehints',
 ]
 
 # Templates path
