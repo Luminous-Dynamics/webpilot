@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "webpilot"
-version = "1.1.0"
+name = "claude-webpilot"
+version = "1.2.0"
 description = "Professional Web Automation and Testing Framework with ML-Powered Test Generation"
 authors = ["WebPilot Contributors"]
 maintainers = ["WebPilot Team <webpilot@example.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "webpilot", from = "src"}]
-homepage = "https://github.com/yourusername/webpilot"
-repository = "https://github.com/yourusername/webpilot"
-documentation = "https://webpilot.readthedocs.io"
+homepage = "https://github.com/Luminous-Dynamics/webpilot"
+repository = "https://github.com/Luminous-Dynamics/webpilot"
+documentation = "https://luminous-dynamics.github.io/webpilot/"
 keywords = [
     "web automation",
     "testing",
@@ -21,7 +21,10 @@ keywords = [
     "test generation",
     "cloud testing",
     "accessibility testing",
-    "performance testing"
+    "performance testing",
+    "mcp",
+    "model context protocol",
+    "ai assistant integration"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

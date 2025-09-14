@@ -30,16 +30,16 @@ WebPilot is a comprehensive web automation framework that combines browser autom
 
 ```bash
 # Basic installation
-pip install webpilot
+pip install claude-webpilot
 
 # With all features
-pip install webpilot[all]
+pip install claude-webpilot[all]
 
 # Specific features
-pip install webpilot[selenium]   # Selenium backend
-pip install webpilot[vision]     # OCR and visual testing
-pip install webpilot[ml]         # Machine learning features
-pip install webpilot[cloud]      # Cloud testing platforms
+pip install claude-webpilot[selenium]   # Selenium backend
+pip install claude-webpilot[vision]     # OCR and visual testing
+pip install claude-webpilot[ml]         # Machine learning features
+pip install claude-webpilot[cloud]      # Cloud testing platforms
 ```
 
 ### Basic Usage
