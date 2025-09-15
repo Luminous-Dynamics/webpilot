@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "claude-webpilot"
-version = "1.4.0"
+version = "1.4.1"
 description = "Universal Web Automation Framework with LLM Support, Visual Intelligence, Autonomous Agents, and Natural Language Test Generation"
 authors = ["WebPilot Contributors"]
 maintainers = ["WebPilot Team <webpilot@example.com>"]

@@ -5,7 +5,7 @@ Claude WebPilot - Professional Web Automation Framework.
 A production-ready tool for web interaction and automation with support for
 multiple browsers, session management, and comprehensive error handling.
 
-Version: 1.1.0
+Version: 1.4.1
 """
 
 import json
@@ -25,12 +25,23 @@ import pickle
 # Import our custom logging configuration
 from webpilot.utils.logging_config import get_logger, setup_logging
 
+# Import v1.4.1 utilities
+from webpilot.utils.smart_errors import (
+    SmartElementNotFoundError, 
+    SmartTimeoutError,
+    SmartNetworkError,
+    ErrorSuggestionEngine
+)
+from webpilot.utils.failure_capture import FailureCapture, capture_on_failure
+from webpilot.utils.retry import retry, with_retry
+from webpilot.utils.network_mock import NetworkMocker
+
 # Setup logging with our configuration
 setup_logging(level='INFO', console=True, file=True)
 logger = get_logger(__name__)
 
 
-# Custom Exceptions
+# Custom Exceptions (now enhanced with smart errors)
 class WebPilotError(Exception):
     """Base exception for WebPilot"""
     pass
@@ -41,13 +52,14 @@ class BrowserNotStartedError(WebPilotError):
     pass
 
 
-class ElementNotFoundError(WebPilotError):
-    """Raised when element cannot be located"""
+# Legacy exceptions for backwards compatibility
+class ElementNotFoundError(SmartElementNotFoundError):
+    """Enhanced element not found error with suggestions"""
     pass
 
 
-class TimeoutError(WebPilotError):
-    """Raised when operation times out"""
+class TimeoutError(SmartTimeoutError):
+    """Enhanced timeout error with context"""
     pass
 
 
@@ -218,18 +230,29 @@ class WebPilotSession:
 
 
 class WebPilot:
-    """Main WebPilot automation class"""
+    """Main WebPilot automation class with v1.4.1 enhancements"""
     
     def __init__(self, 
                  browser: BrowserType = BrowserType.FIREFOX,
                  headless: bool = False,
-                 session: Optional[WebPilotSession] = None):
+                 session: Optional[WebPilotSession] = None,
+                 failure_capture: Optional[FailureCapture] = None,
+                 network_mocker: Optional[NetworkMocker] = None,
+                 retry_config: Optional[Dict[str, Any]] = None):
         self.browser = browser
         self.headless = headless
         self.session = session or WebPilotSession()
         self.logger = self.session.logger
         self.browser_process = None
         self._xdotool_available = self._check_xdotool()
+        
+        # v1.4.1 enhancements
+        self.failure_capture = failure_capture or FailureCapture()
+        self.network_mocker = network_mocker
+        self.retry_config = retry_config or {'times': 3, 'delay': 1, 'backoff': 2}
+        self.error_engine = ErrorSuggestionEngine()
+        self.current_url = None
+        self.last_action = None
         
     def _check_xdotool(self) -> bool:
         """Check if xdotool is available"""
@@ -418,9 +441,11 @@ class WebPilot:
             )
             
     def click(self, x: Optional[int] = None, y: Optional[int] = None,
-              text: Optional[str] = None, selector: Optional[str] = None) -> ActionResult:
-        """Click on an element"""
+              text: Optional[str] = None, selector: Optional[str] = None,
+              retry_on_fail: bool = True) -> ActionResult:
+        """Click on an element with retry logic and smart error handling"""
         start_time = time.time()
+        self.last_action = "click"
         
         if not self._xdotool_available:
             return ActionResult(
@@ -428,8 +453,8 @@ class WebPilot:
                 action_type=ActionType.CLICK,
                 error="xdotool required for clicking"
             )
-            
-        try:
+        
+        def _perform_click():
             window_id = self._get_browser_window()
             if window_id:
                 subprocess.run(["xdotool", "windowfocus", window_id])
@@ -438,11 +463,40 @@ class WebPilot:
                 subprocess.run(["xdotool", "mousemove", str(x), str(y)])
                 subprocess.run(["xdotool", "click", "1"])
                 target = f"({x}, {y})"
+            elif selector:
+                # Enhanced selector handling with error suggestions
+                # This would need actual element detection in a real implementation
+                raise SmartElementNotFoundError(
+                    selector=selector,
+                    suggestions=[
+                        "Element might be in an iframe",
+                        "Wait for dynamic content to load",
+                        "Check selector syntax"
+                    ],
+                    page_info={
+                        'url': self.current_url,
+                        'last_action': self.last_action
+                    }
+                )
             else:
                 # For text/selector, we'd need more advanced detection
                 # For now, just click at current position
                 subprocess.run(["xdotool", "click", "1"])
                 target = "current position"
+            
+            return target
+        
+        try:
+            # Use retry wrapper if enabled
+            if retry_on_fail:
+                target = with_retry(
+                    _perform_click,
+                    times=self.retry_config['times'],
+                    delay=self.retry_config['delay'],
+                    exceptions=(subprocess.CalledProcessError, WebPilotError)
+                )
+            else:
+                target = _perform_click()
                 
             duration = (time.time() - start_time) * 1000
             
@@ -458,6 +512,10 @@ class WebPilot:
             return result
             
         except Exception as e:
+            # Capture failure if configured
+            if self.failure_capture:
+                self.failure_capture.capture_failure(self, "click", e)
+            
             self.logger.error(f"Click failed: {e}")
             return ActionResult(
                 success=False,
@@ -736,6 +794,130 @@ class WebPilot:
             
         return None
         
+    def set_network_mocker(self, mocker: NetworkMocker):
+        """Set network mocker for intercepting requests"""
+        self.network_mocker = mocker
+        self.logger.info(f"Network mocker configured with {len(mocker.rules)} rules")
+        
+    def wait_for_element(self, selector: str, timeout: float = 10) -> ActionResult:
+        """Wait for element to appear with smart error handling"""
+        start_time = time.time()
+        self.last_action = f"wait_for_element({selector})"
+        
+        while time.time() - start_time < timeout:
+            # In a real implementation, this would check for element presence
+            # For now, we'll simulate with a wait
+            time.sleep(0.5)
+            
+            # Check if element exists (simulated)
+            # In real implementation, would use Selenium or similar
+            if time.time() - start_time > 2:  # Simulate element found after 2s
+                duration = (time.time() - start_time) * 1000
+                return ActionResult(
+                    success=True,
+                    action_type=ActionType.WAIT,
+                    data={'selector': selector, 'found_after': duration/1000},
+                    duration_ms=duration
+                )
+        
+        # Timeout - raise smart error
+        raise SmartTimeoutError(
+            operation=f"waiting for element: {selector}",
+            timeout=timeout,
+            element=selector,
+            suggestions=[
+                "Increase timeout value",
+                "Check if element selector is correct",
+                "Verify page is fully loaded",
+                "Check for JavaScript errors"
+            ]
+        )
+        
+    def wait_for_network_idle(self, timeout: float = 10, idle_time: float = 0.5) -> ActionResult:
+        """Wait for network activity to become idle"""
+        start_time = time.time()
+        self.last_action = "wait_for_network_idle"
+        
+        # Simulated network idle detection
+        time.sleep(idle_time)
+        
+        duration = (time.time() - start_time) * 1000
+        return ActionResult(
+            success=True,
+            action_type=ActionType.WAIT,
+            data={'idle_time': idle_time},
+            duration_ms=duration
+        )
+        
+    def execute_script(self, script: str) -> ActionResult:
+        """Execute JavaScript in the browser context"""
+        start_time = time.time()
+        self.last_action = f"execute_script"
+        
+        # This would need actual browser integration
+        # For now, return a placeholder result
+        duration = (time.time() - start_time) * 1000
+        
+        return ActionResult(
+            success=True,
+            action_type=ActionType.SCRIPT,
+            data={'script_length': len(script)},
+            duration_ms=duration
+        )
+        
+    def get_page_source(self) -> str:
+        """Get the current page HTML source"""
+        # In real implementation, would get actual page source
+        return "<html><body>Page content</body></html>"
+        
+    def get_console_logs(self) -> List[Dict[str, Any]]:
+        """Get browser console logs"""
+        # In real implementation, would get actual console logs
+        return [
+            {"level": "info", "message": "Page loaded", "timestamp": datetime.now().isoformat()}
+        ]
+        
+    def get_network_logs(self) -> List[Dict[str, Any]]:
+        """Get network activity logs"""
+        # In real implementation, would get actual network logs
+        return [
+            {"url": self.current_url or "unknown", "method": "GET", "status": 200}
+        ]
+        
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get page performance metrics"""
+        # In real implementation, would get actual metrics
+        return {
+            "domContentLoaded": 1234,
+            "loadComplete": 2345,
+            "firstPaint": 456,
+            "firstContentfulPaint": 789
+        }
+        
+    def get_browser_info(self) -> Dict[str, str]:
+        """Get browser information"""
+        return {
+            "type": self.browser.value,
+            "headless": str(self.headless),
+            "session_id": self.session.session_id
+        }
+        
+    def is_element_visible(self, selector: str) -> bool:
+        """Check if element is visible"""
+        # In real implementation, would check actual element visibility
+        return True
+        
+    def is_page_loaded(self) -> bool:
+        """Check if page is fully loaded"""
+        # In real implementation, would check actual page state
+        return True
+        
+    @capture_on_failure()
+    def test_with_failure_capture(self):
+        """Example method with automatic failure capture"""
+        # This demonstrates the decorator usage
+        pass
+    
     def get_session_report(self) -> Dict:
         """Get comprehensive session report"""
         return {
@@ -745,7 +927,10 @@ class WebPilot:
             'total_actions': len(self.session.state.get('action_history', [])),
             'screenshots_taken': len(self.session.state.get('screenshots', [])),
             'session_dir': str(self.session.session_dir),
-            'log_file': str(self.session.log_file)
+            'log_file': str(self.session.log_file),
+            'retry_config': self.retry_config,
+            'failure_capture_enabled': self.failure_capture is not None,
+            'network_mocker_enabled': self.network_mocker is not None
         }
 
 

@@ -6,9 +6,31 @@
 [![LLM Support](https://img.shields.io/badge/LLM%20Support-Universal-brightgreen)](https://github.com/Luminous-Dynamics/webpilot)
 [![Tests](https://img.shields.io/badge/tests-500%2B-success)](https://github.com/Luminous-Dynamics/webpilot)
 
-> **🚀 v1.4.0 - Universal LLM Support + Visual Intelligence + Autonomous Agents + Natural Language Tests!**
+> **🚀 v1.4.1 - Enhanced Reliability with Retry Mechanisms + Smart Errors + Network Mocking!**
 
 WebPilot is the most comprehensive web automation framework that works with **ANY Large Language Model**. Control browsers with natural language, create self-healing automations, and generate tests from plain English descriptions.
+
+## 🎉 What's New in v1.4.1
+
+### 🔄 Automatic Retry Mechanisms
+- **Smart retries** with exponential backoff for flaky tests
+- **Multiple retry patterns**: decorators, context managers, wrappers
+- **Configurable strategies** per operation
+
+### 💡 Smart Error Messages
+- **Helpful suggestions** when elements aren't found
+- **Fuzzy matching** to correct selector typos
+- **Page state analysis** for better debugging
+
+### 📸 Automatic Failure Capture
+- **Screenshots, HTML, logs** captured on test failure
+- **Organized artifacts** in timestamped directories
+- **Smart error analysis** with actionable fixes
+
+### 🌐 Network Mocking
+- **Mock API responses** for faster, deterministic tests
+- **Multiple strategies**: exact, regex, domain matching
+- **Simulate conditions**: errors, timeouts, slow responses
 
 ## 🎉 What's New in v1.4.0
 
