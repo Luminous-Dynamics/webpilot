@@ -31,6 +31,18 @@
 - **Commit**: 2103b97
 - **Status**: ✅ Merged and committed
 
+### 5. NixOS Documentation Complete
+- **Files**: NIXOS_NATIVE_SOLUTION.md, QUICK_SETUP.md, test_nixos_playwright.py
+- **Content**: 5 native approaches documented, Docker vs FHS comparison
+- **Commit**: Previous session
+- **Status**: ✅ Complete and committed
+
+### 6. Website Updated to v2.0.0
+- **File**: docs/index.html
+- **Changes**: Updated from v1.4.0 to v2.0.0, Playwright features, NixOS instructions
+- **Commit**: 550cee2
+- **Status**: ✅ Updated and committed
+
 ---
 
 ## ⚠️ Blocking Issue: GitHub Secret Scanning
@@ -89,9 +101,11 @@ git push origin main --force --tags
 ### Files Modified/Added
 - Core implementation: `src/webpilot/core/*.py`
 - Documentation: 7 comprehensive guides (~60KB)
+- NixOS guides: `NIXOS_NATIVE_SOLUTION.md`, `QUICK_SETUP.md`
 - Tests: `test_playwright_migration.py`
 - Build config: `pyproject.toml`, `flake.nix`
 - Roadmap: `ROADMAP_v2.1.md`
+- Website: `docs/index.html` (updated to v2.0.0)
 
 ---
 
