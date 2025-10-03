@@ -1,13 +1,16 @@
 """
 WebPilot - Comprehensive Web Automation and DevOps Testing Framework
-Now with Model Context Protocol (MCP) support for AI assistant integration.
+Now powered by Playwright for superior performance and reliability.
 """
 
-__version__ = "1.1.0"
+__version__ = "2.0.0-playwright"
 
-# Core imports
+# Core Playwright implementations
 from .core import (
     WebPilot,
+    PlaywrightAutomation,
+    RealBrowserAutomation,
+    # Legacy stubs for backward compatibility
     WebPilotSession,
     ActionResult,
     ActionType,
@@ -15,20 +18,37 @@ from .core import (
     WebElement
 )
 
-# Backends
-from .backends.selenium import SeleniumWebPilot
-from .backends.async_pilot import AsyncWebPilot
+# Optional features - import only if available
+try:
+    from .backends.selenium import SeleniumWebPilot
+except ImportError:
+    SeleniumWebPilot = None
 
-# Features
-from .features.vision import WebPilotVision
-from .features.devops import (
-    WebPilotDevOps,
-    PerformanceMetrics,
-    AccessibilityReport
-)
+try:
+    from .backends.async_pilot import AsyncWebPilot
+except ImportError:
+    AsyncWebPilot = None
 
-# Integrations
-from .integrations.cicd import WebPilotCICD
+try:
+    from .features.vision import WebPilotVision
+except ImportError:
+    WebPilotVision = None
+
+try:
+    from .features.devops import (
+        WebPilotDevOps,
+        PerformanceMetrics,
+        AccessibilityReport
+    )
+except ImportError:
+    WebPilotDevOps = None
+    PerformanceMetrics = None
+    AccessibilityReport = None
+
+try:
+    from .integrations.cicd import WebPilotCICD
+except ImportError:
+    WebPilotCICD = None
 
 # MCP Support
 try:
@@ -42,27 +62,31 @@ except ImportError:
 
 # Convenience imports
 __all__ = [
-    # Core
+    # Core Playwright
     'WebPilot',
+    'PlaywrightAutomation',
+    'RealBrowserAutomation',
+
+    # Legacy compatibility
     'WebPilotSession',
     'ActionResult',
     'ActionType',
     'BrowserType',
     'WebElement',
-    
-    # Backends
+
+    # Optional backends
     'SeleniumWebPilot',
     'AsyncWebPilot',
-    
-    # Features
+
+    # Optional features
     'WebPilotVision',
     'WebPilotDevOps',
     'PerformanceMetrics',
     'AccessibilityReport',
-    
-    # Integrations
+
+    # Optional integrations
     'WebPilotCICD',
-    
+
     # MCP components
     'WebPilotMCPServer',
     'WebPilotTools',
