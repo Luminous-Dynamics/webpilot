@@ -79,8 +79,11 @@ def feature_3_visual_regression(url):
         print("\n⏳ Waiting for globe to render (3 seconds)...")
         time.sleep(3)
 
+        # Check if baseline exists (check metadata dict)
+        has_baseline = "terra_globe" in vr.metadata
+
         # Take baseline screenshot
-        if not vr.baseline_exists("terra_globe"):
+        if not has_baseline:
             print("\n📸 Taking baseline screenshot...")
             baseline_path = vr.take_baseline("terra_globe", browser.page)
             print(f"✅ Baseline saved: {baseline_path}")
