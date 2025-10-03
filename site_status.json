@@ -1,0 +1,20 @@
+[
+  {
+    "site": "github.com",
+    "status": "UP",
+    "title": "GitHub \u00b7 Build and ship software on a single, collaborative platform \u00b7 GitHub",
+    "screenshot": "screenshots/github_com.png"
+  },
+  {
+    "site": "google.com",
+    "status": "UP",
+    "title": "Google",
+    "screenshot": "screenshots/google_com.png"
+  },
+  {
+    "site": "stackoverflow.com",
+    "status": "UP",
+    "title": "Newest Questions - Stack Overflow",
+    "screenshot": "screenshots/stackoverflow_com.png"
+  }
+]

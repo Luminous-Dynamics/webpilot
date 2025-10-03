@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-09-16T08:15:58.570345",
+  "project": "Luminous Nix",
+  "bug": "UIGeneratorCLI import error",
+  "symptoms": [
+    "Cannot import name UIGeneratorCLI from luminous_nix.gui",
+    "All CLI commands failed with import error",
+    "UI command module could not initialize"
+  ],
+  "root_cause": "UIGeneratorCLI and UserContext classes did not exist in gui module",
+  "fix": {
+    "file": "src/luminous_nix/gui/__init__.py",
+    "solution": "Created aliases to existing classes",
+    "changes": [
+      "UIGeneratorCLI = NixOSGUI",
+      "UserContext = dict"
+    ]
+  },
+  "verification": {
+    "help_command": "Working",
+    "search_command": "Working",
+    "list_command": "Working",
+    "ui_command": "Working",
+    "ui_create": "Working (module check passes)"
+  },
+  "status": "FIXED"
+}

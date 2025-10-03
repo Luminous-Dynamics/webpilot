@@ -1,0 +1,26 @@
+{
+  "example.com": {
+    "status": "UP",
+    "title": "Example Domain",
+    "url": "https://example.com/",
+    "screenshot": "screenshots/example.com.png",
+    "stats": {
+      "links": 1,
+      "images": 0,
+      "scripts": 0
+    },
+    "timestamp": 1759464788.0166152
+  },
+  "httpbin.org": {
+    "status": "UP",
+    "title": "httpbin.org",
+    "url": "https://httpbin.org/",
+    "screenshot": "screenshots/httpbin.org.png",
+    "stats": {
+      "links": 5,
+      "images": 0,
+      "scripts": 4
+    },
+    "timestamp": 1759464790.7316012
+  }
+}

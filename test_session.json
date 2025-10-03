@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": 1759464831.7779076,
+    "action": "start",
+    "details": {
+      "browser": "firefox",
+      "headless": true
+    }
+  },
+  {
+    "timestamp": 1759464832.1651607,
+    "action": "navigate",
+    "details": {
+      "url": "https://httpbin.org/html"
+    }
+  },
+  {
+    "timestamp": 1759464832.4449544,
+    "action": "navigate",
+    "details": {
+      "url": "https://example.com"
+    }
+  }
+]
